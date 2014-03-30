@@ -1,0 +1,34 @@
+/*
+ * This is the 'look ahead' part of the CLA. Basically, rather than trying to get the carry from the FA4Bit, it looks through the bits and finds out
+ * if a carry bit will be generated or not. This allows multiple FA4Bit's to run in parrarell, because each one can run as soon as the carry input is discovered,
+ * instead of having to wait for the carry output of the previous FA4Bit.
+ */
+CHIP CarryGenerate {
+    IN a[4], b[4],c;    //inputs: A, B(both 4 bit), and a carry
+    OUT carry;    // a + b 
+
+    PARTS:
+	And(a=a[0],b=b[0],out=g0); //If Gi is 1, then we have a carry bit generated
+	And(a=a[1],b=b[1],out=g1);
+	And(a=a[2],b=b[2],out=g2);
+	And(a=a[3],b=b[3],out=g3);
+	
+	Or(a=a[0],b=b[0],out=p0); //If Pi is 1, then we have a pair that would pass the carry bit onward
+	Or(a=a[1],b=b[1],out=p1);
+	Or(a=a[2],b=b[2],out=p2);
+	Or(a=a[3],b=b[3],out=p3);
+	
+	And(a=p0,b=p1,out=p01);
+	And(a=p01,b=p2,out=p02);
+	And(a=p02,b=p3, out=p03); //If all propegates(Pi) are 1, then the entire block will pass on a carry from the previous block. Pij refers to Propegate for multiple bits.
+	And(a=p03, b=c,out=PrevCarry);
+	
+	And(a=g0,b=p1,out=ppg01);
+	Or(a=ppg01, b=g1, out=pg01);
+	And(a=pg01, b=p2, out=ppg02);
+	Or(a=ppg02,b=g2,out=pg02);
+	And(a=pg02, b=p3,out=ppg03);
+	Or(a=ppg03, b=g3,out=pg03); //This block handles the case that if a carry is generated within the block, and then propegates to the end.
+	
+	Or(a=PrevCarry, b=pg03,out=carry);
+}

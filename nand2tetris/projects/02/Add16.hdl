@@ -1,0 +1,32 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/02/Add16.hdl
+
+/*
+ * Adds two 16-bit values.
+ * The most significant carry bit is ignored. Added: Why are we ignoring it in this case?
+ */
+/*
+ * Note:
+ * I didn't use a RCA(Ripple Carry Adder) type adder for this. Instead, I went with a faster implimentation(known as CLA, or Carry Lookahead Adder)
+ * Essentially, the difference is that a RCA is not parrarell(you need the output of the previous full adder to get the carry for the next one), and CLA is.
+ * This relies on the 4bitFA.hdl file.
+ */
+CHIP Add16 {
+    IN a[16], b[16];
+    OUT out[16];
+
+    PARTS:
+	
+	CarryGenerate(a= a[0..3] ,b=b[0..3] ,c=false,carry=c03);
+	CarryGenerate(a= a[4..7] ,b=b[4..7] ,c=c03  ,carry=c47);
+	CarryGenerate(a= a[8..11],b=b[8..11],c=c47  ,carry=c811); //Carry is the carry output of the 4 bits i to j.
+															 //If we cared about what the carry output of the whole 16 bit block was, we could stick another line here to find it out quickly.
+
+	FA4bit(a = a[0..3],b=b[0..3], carry=false, out=out[0..3]);
+	FA4bit(a = a[4..7],b=b[4..7], carry=c03, out=out[4..7]);
+	FA4bit(a = a[8..11],b=b[8..11], carry=c47, out=out[8..11]);
+	FA4bit(a = a[12..15],b=b[12..15], carry=c811, out=out[12..15]);
+
+}
